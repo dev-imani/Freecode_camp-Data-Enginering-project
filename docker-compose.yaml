@@ -1,8 +1,6 @@
-version: "3" # version for our docker compose file
-
 services: # creating our containers
   source_postgres: # container number1
-    image: postgres:latest # image of our container
+    image: postgres:15 # image of our container
     ports:
       - "5433:5432"
     networks:
@@ -15,7 +13,7 @@ services: # creating our containers
       - ./source_db_init/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   destination_postgres:
-    image: postgres:latest
+    image: postgres:15
     ports:
       - "5434:5432"
     networks:
@@ -27,14 +25,36 @@ services: # creating our containers
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
   elt_service:
-    build: context:./elt_script
-      dockerfile:dockerfile
-      command:["python","elt_script.py"]
+    build:
+      context: ./elt_script
+      dockerfile: Dockerfile
+    command: ["python", "elt_script.py"]
     networks:
       - elt_network
     depends_on: #the container cant run unless the first two are initialised
       - source_postgres
       - destination_postgres
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-postgres:1.4.7
+    command:
+      [
+        "run",
+        "--profiles-dir",
+        "/root",
+        "--project-dir",
+        "/dbt",
+        "--full-refresh",
+      ]
+    networks:
+      - elt_network
+    depends_on:
+      - elt_service
+    volumes:
+      - ./custom_postgres:/dbt
+      - ~/.dbt:/root
+    environment:
+      DBT_PROFILE: default
+      DBT_TARGET: dev
 
 networks:
   elt_network:

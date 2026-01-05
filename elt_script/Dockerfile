@@ -1,7 +1,9 @@
 FROM python:3.8-slim
 
-# Install PostgreSQL command-line tools
-RUN apt-get update && apt-get install -y postgresql-client
+# Install PostgreSQL command-line tools (match server major version 15)
+RUN apt-get update \
+    && apt-get install -y postgresql-client-15 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy the ELT script 
 COPY elt_script.py .
