@@ -16,6 +16,7 @@ default_args = {
 }
 
 
+
 def run_elt_script():
     script_path = "/opt/airflow/elt_script/elt_script.py"
     result = subprocess.run(["python", script_path],
@@ -33,6 +34,7 @@ dag = DAG(
     start_date=datetime(2023, 10, 3),
     catchup=False,
 )
+
 
 t1 = PythonOperator(
     task_id='run_elt_script',
